@@ -149,9 +149,6 @@ export class NeatGradient implements NeatController {
         const render = () => {
 
             const { renderer, camera, scene, meshes } = this.sceneState;
-            if (Math.floor(tick * 10) % 5 === 0) {
-                addNeatLink(ref);
-            }
 
             renderer.setClearColor(this._backgroundColor, this._backgroundAlpha);
             meshes.forEach((mesh) => {
@@ -474,26 +471,26 @@ void main() {
         u_wave_frequency_y * position.y + u_time,
         u_time
     ));
-    
+
     vec3 color;
 
     // float t = mod(u_base_color, 100.0);
     color = u_colors[0].color;
-    
+
     vec2 noise_cord = vUv * u_color_pressure;
-    
+
     const float minNoise = .0;
     const float maxNoise = .9;
-    
+
     for (int i = 1; i < u_colors_count; i++) {
-    
+
         if(u_colors[i].is_active == 1.0){
             float noiseFlow = (1. + float(i)) / 30.;
             float noiseSpeed = (1. + float(i)) * 0.11;
             float noiseSeed = 13. + float(i) * 7.;
-            
+
             int reverseIndex = u_colors_count - i;
-            
+
             float noise = snoise(
                 vec3(
                     noise_cord.x * u_color_pressure.x + u_time * noiseFlow * 2.,
@@ -501,25 +498,25 @@ void main() {
                     u_time * noiseSpeed
                 ) + noiseSeed
             ) - (.1 * float(i)) + (.5 * u_color_blending);
-            
+
             noise = clamp(minNoise, maxNoise + float(i) * 0.02, noise);
             vec3 nextColor = u_colors[i].color;
             color = mix(color, nextColor, smoothstep(0.0, u_color_blending, noise));
-            
+
             // vec3 colorOklab = oklab2rgb(color);
             // vec3 nextColorOklab = oklab2rgb(nextColor);
             // vec3 mixColor = mix(colorOklab, nextColorOklab, smoothstep(0.0, u_color_blending, noise));
             // color = rgb2oklab(mixColor);
-            
+
         }
-        
+
     }
-    
+
     v_color = color;
-    
+
     vec3 newPosition = position + normal * v_displacement_amount * u_wave_amplitude;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
-    
+
     v_new_position = gl_Position;
 }
 `;
@@ -581,10 +578,10 @@ struct Color {
     float value;
 };
 
-uniform float u_grain_intensity; 
-uniform float u_grain_sparsity; 
-uniform float u_grain_scale; 
-uniform float u_grain_speed; 
+uniform float u_grain_intensity;
+uniform float u_grain_sparsity;
+uniform float u_grain_scale;
+uniform float u_grain_speed;
 uniform float u_time;
 
 uniform float u_wave_amplitude;
@@ -794,19 +791,19 @@ mat3 yuv2rgb = mat3(1.0, 0.0, 1.13983,
 mat3 rgb2yuv = mat3(0.2126, 0.7152, 0.0722,
                     -0.09991, -0.33609, 0.43600,
                     0.615, -0.5586, -0.05639);
-                    
+
 vec3 oklab2rgb(vec3 linear)
 {
     const mat3 im1 = mat3(0.4121656120, 0.2118591070, 0.0883097947,
                           0.5362752080, 0.6807189584, 0.2818474174,
                           0.0514575653, 0.1074065790, 0.6302613616);
-                       
+
     const mat3 im2 = mat3(+0.2104542553, +1.9779984951, +0.0259040371,
                           +0.7936177850, -2.4285922050, +0.7827717662,
                           -0.0040720468, +0.4505937099, -0.8086757660);
-                       
+
     vec3 lms = im1 * linear;
-            
+
     return im2 * (sign(lms) * pow(abs(lms), vec3(1.0/3.0)));
 }
 
@@ -815,12 +812,12 @@ vec3 rgb2oklab(vec3 oklab)
     const mat3 m1 = mat3(+1.000000000, +1.000000000, +1.000000000,
                          +0.396337777, -0.105561346, -0.089484178,
                          +0.215803757, -0.063854173, -1.291485548);
-                       
+
     const mat3 m2 = mat3(+4.076724529, -1.268143773, -0.004111989,
                          -3.307216883, +2.609332323, -0.703476310,
                          +0.230759054, -0.341134429, +1.706862569);
     vec3 lms = m1 * oklab;
-    
+
     return m2 * (lms * lms * lms);
 }
 
@@ -851,7 +848,7 @@ float getSaturation(vec3 color) {
     float min = min(color.r, min(color.g, color.b));
     return (max - min) / max;
 }
-    
+
 vec3 rgb2hsv(vec3 c)
 {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -870,41 +867,6 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 `;
-
-
-const setLinkStyles = (link: HTMLAnchorElement) => {
-    link.id = LINK_ID;
-    link.href = "https://neat.firecms.co";
-    link.target = "_blank";
-    link.style.position = "absolute";
-    link.style.display = "block";
-    link.style.bottom = "0";
-    link.style.right = "0";
-    link.style.padding = "10px";
-    link.style.color = "#dcdcdc";
-    link.style.opacity = "0.8";
-    link.style.fontFamily = "sans-serif";
-    link.style.fontSize = "16px";
-    link.style.fontWeight = "bold";
-    link.style.textDecoration = "none";
-    link.style.zIndex = "10000";
-    link.innerHTML = "NEAT";
-}
-
-const addNeatLink = (ref: HTMLCanvasElement) => {
-    const existingLinks = ref.parentElement?.getElementsByTagName("a");
-    if (existingLinks) {
-        for (let i = 0; i < existingLinks.length; i++) {
-            if (existingLinks[i].id === LINK_ID) {
-                setLinkStyles(existingLinks[i]);
-                return;
-            }
-        }
-    }
-    const link = document.createElement("a");
-    setLinkStyles(link);
-    ref.parentElement?.appendChild(link);
-}
 
 function getElapsedSecondsInLastHour() {
     const now = new Date();
